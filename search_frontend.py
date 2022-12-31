@@ -8,57 +8,36 @@ from nltk.util import ngrams
 from search_backend import *
 from collections import defaultdict
 import numpy as np
-import math
-import pickle
-import os
-import json
-import requests
-import time
-
-# tokenizer
-RE_WORD = re.compile(r"""[\#\@\w](['\-]?\w){,24}""", re.UNICODE)
-# remove stopwords
-stop_words = set(stopwords.words('english'))
-# corpus stop words
-corpus_stopwords = ['category', 'references',
-                    'also', 'links', 'extenal', 'see', 'thumb']
-# union of stop words
-all_stop_words = stop_words.union(corpus_stopwords)
-
-# stemmer
-stemmer = PorterStemmer()
-
-pkl_file = "part15_preprocessed.pkl"
-
-with open(pkl_file, 'rb') as f:
-    pages = pickle.load(f)
-
-with open("posting_lists.pkl", 'rb') as f:
-    posting_lists = pickle.load(f)
-
-with open("posting_body_lists.pkl", 'rb') as f:
-    posting_body_lists = pickle.load(f)
-
-with open("posting_title_lists.pkl", 'rb') as f:
-    posting_title_lists = pickle.load(f)
-
-with open("dl/dl_title.pkl", 'rb') as f:
-    DL_title = pickle.load(f)
-    AVGDL_title = sum(DL_title.values()) / len(DL_title)
-
-with open("dl/dl_body.pkl", 'rb') as f:
-    DL_body = pickle.load(f)
-    AVGDL_body = sum(DL_body.values()) / len(DL_body)
-
-with open("dl/df_title.pkl", 'rb') as f:
-    DF_title = pickle.load(f)
-
-with open("dl/df_body.pkl", 'rb') as f:
-    DF_body = pickle.load(f)
+from search_backend import Backend
 
 
-def tokenize(text):
-    return [token.group() for token in RE_WORD.finditer(text.lower())]
+# pkl_file = "part15_preprocessed.pkl"
+
+# with open(pkl_file, 'rb') as f:
+#     pages = pickle.load(f)
+
+# with open("posting_lists.pkl", 'rb') as f:
+#     posting_lists = pickle.load(f)
+
+# with open("posting_body_lists.pkl", 'rb') as f:
+#     posting_body_lists = pickle.load(f)
+
+# with open("posting_title_lists.pkl", 'rb') as f:
+#     posting_title_lists = pickle.load(f)
+
+# with open("dl/dl_title.pkl", 'rb') as f:
+#     DL_title = pickle.load(f)
+#     AVGDL_title = sum(DL_title.values()) / len(DL_title)
+
+# with open("dl/dl_body.pkl", 'rb') as f:
+#     DL_body = pickle.load(f)
+#     AVGDL_body = sum(DL_body.values()) / len(DL_body)
+
+# with open("dl/df_title.pkl", 'rb') as f:
+#     DF_title = pickle.load(f)
+
+# with open("dl/df_body.pkl", 'rb') as f:
+#     DF_body = pickle.load(f)
 
 
 class MyFlaskApp(Flask):
@@ -94,27 +73,8 @@ def search():
     if len(query) == 0:
         return jsonify(res)
 
-    # Tokenize the query
-    tokens = [token.group() for token in RE_WORD.finditer(query.lower())]
-    tokens = [stemmer.stem(t) for t in tokens if t not in all_stop_words]
-    ngrams_tokens = []
-    try:
-        for ngram in list(ngrams(tokens, 2)):
-            ngrams_tokens.append(ngram[0] + " " + ngram[1])
-    except:
-        pass
-
-    pls = {}
-    pls_body = {}
-    pls_title = {}
-
-    # Normalize bm25 score for better manipulation in merging of results
-
-    # Get Title score by unique tokens in title
-
-    # Normalize Title score 0 to 1
-
-    # Assign Document Title to corresponding ID
+    # BEGIN SOLUTION
+    query_list = Backend.query_preprocess(query, Backend.get_index())
 
     return jsonify(res)
 
@@ -140,17 +100,7 @@ def search_body():
     if len(query) == 0:
         return jsonify(res)
     # BEGIN SOLUTION
-    # Tokenize the query
-    tokens = [token.group() for token in RE_WORD.finditer(query.lower())]
-    tokens = [stemmer.stem(t) for t in tokens if t not in all_stop_words]
-    ngrams_tokens = []
-    try:
-        for ngram in list(ngrams(tokens, 2)):
-            ngrams_tokens.append(ngram[0] + " " + ngram[1])
-    except:
-        pass
-
-    #
+    query_list = Backend.query_preprocess(query, Backend.get_index())
 
     # END SOLUTION
     return jsonify(res)
@@ -179,6 +129,7 @@ def search_title():
     if len(query) == 0:
         return jsonify(res)
     # BEGIN SOLUTION
+    query_list = Backend.query_preprocess(query, Backend.get_index())
 
     # END SOLUTION
     return jsonify(res)
@@ -207,7 +158,7 @@ def search_anchor():
     if len(query) == 0:
         return jsonify(res)
     # BEGIN SOLUTION
-
+    query_list = Backend.query_preprocess(query, Backend.get_index())
     # END SOLUTION
     return jsonify(res)
 
@@ -233,7 +184,7 @@ def get_pagerank():
     if len(wiki_ids) == 0:
         return jsonify(res)
     # BEGIN SOLUTION
-
+    res = Backend.get_pagerank(wiki_ids)
     # END SOLUTION
     return jsonify(res)
 
@@ -261,7 +212,7 @@ def get_pageview():
     if len(wiki_ids) == 0:
         return jsonify(res)
     # BEGIN SOLUTION
-
+    res = Backend.get_pageview(wiki_ids)
     # END SOLUTION
     return jsonify(res)
 
@@ -269,3 +220,4 @@ def get_pageview():
 if __name__ == '__main__':
     # run the Flask RESTful API, make the server publicly available (host='0.0.0.0') on port 8080
     app.run(host='0.0.0.0', port=8080, debug=True)
+
