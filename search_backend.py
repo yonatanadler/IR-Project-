@@ -1,54 +1,73 @@
-import pandas as pd
-import nltk
-import pickle
-import numpy as np
 import math
 import re
-import os
-from collections import Counter
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
+import pickle
+import nltk
 from nltk.stem.porter import *
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.util import ngrams
+import numpy as np
+from collections import Counter, OrderedDict, defaultdict
+from contextlib import closing
+from google.cloud import storage
+from gcp.inverted_index import *
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 
 
 class Backend:
-    index_body = {}
-    index_title = {}
-    index_anchor = {}
+    index_body = None
+    index_title = None
+    index_anchor = None
 
+    page_rank = {}
+    page_view = {}
+
+    bucket_name = '207044777pkl'
+
+    # preprocessing
     RE_WORD = re.compile(r"""[\#\@\w](['\-]?\w){,24}""", re.UNICODE)
     stemmer = PorterStemmer()
     stop_words = set(stopwords.words('english'))
     corpus_stopwords = ['category', 'references',
                         'also', 'links', 'extenal', 'see', 'thumb']
     all_stop_words = stop_words.union(corpus_stopwords)
+
     TUPLE_SIZE = 6
 
     def __init__(self):
-        with open('index_body.pkl', 'rb') as f:
-            self.index_body = pickle.load(f)
-        with open('index_title.pkl', 'rb') as f:
-            self.index_title = pickle.load(f)
-        with open('index_anchor.pkl', 'rb') as f:
-            self.index_anchor = pickle.load(f)
+        client = storage.Client()
+        blobs = client.list_blobs(self.bucket_name)
+        for blob in blobs:
+            with open('index_title.pkl', 'rb') as f:
+                self.index_title = pickle.load(f)
 
-    def query_preprocess(self, query, index):
+    def get_index_title(self):
+        return self.index_title
+
+    def query_preprocess(self, query):
         tokens = [token.group()
                   for token in self.RE_WORD.finditer(query.lower())]
-        tokens = [self.stemmer.stem(t)
-                  for t in tokens if t not in self.all_stop_words]
-        ngrams_tokens = []
-        try:
-            for ngram in list(ngrams(tokens, 2)):
-                ngrams_tokens.append(ngram[0] + " " + ngram[1])
-        except:
-            pass
-        tokens = tokens + ngrams_tokens
-        tokens = [t for t in tokens if t in index]
+        tokens = [token for token in tokens if token not in self.all_stop_words]
+        # tokens = [self.stemmer.stem(t)
+        #           for t in tokens if t not in self.all_stop_words]
         return tokens
+
+    def read_posting_list(self, inverted, w, index_name):
+        with closing(MultiFileReader()) as reader:
+            locs = inverted.posting_locs[w]
+            b = reader.read(locs, inverted.df[w] * TUPLE_SIZE, index_name)
+            posting_list = []
+            for i in range(inverted.df[w]):
+                doc_id = int.from_bytes(
+                    b[i * TUPLE_SIZE:i * TUPLE_SIZE + 4], 'big')
+                tf = int.from_bytes(
+                    b[i * TUPLE_SIZE + 4:(i + 1) * TUPLE_SIZE], 'big')
+                posting_list.append((doc_id, tf))
+            return posting_list
 
     def tf_idf_scores(data):
         tfidf_vectorizer = TfidfVectorizer(stop_words='english')

@@ -8,7 +8,7 @@ from nltk.util import ngrams
 from search_backend import *
 from collections import defaultdict
 import numpy as np
-from search_backend import Backend
+from search_backend import *
 
 
 # pkl_file = "part15_preprocessed.pkl"
@@ -130,6 +130,18 @@ def search_title():
         return jsonify(res)
     # BEGIN SOLUTION
     query_list = Backend.query_preprocess(query, Backend.get_index())
+    index_title = Backend.get_index_title()
+    count_quary_word = {}
+    for term in np.unique(query_list):
+        if term not in index_title.df.keys():
+            continue
+        pls = Backend.read_posting_list(index_title, term, '_title')
+        for doc_id in pls:
+            if doc_id in count_quary_word.keys():
+                count_quary_word[doc_id] += 1
+            else:
+                count_quary_word[doc_id] = 1
+    res = sorted(count_quary_word.items(), key=lambda x: x[1], reverse=True)
 
     # END SOLUTION
     return jsonify(res)
@@ -220,4 +232,3 @@ def get_pageview():
 if __name__ == '__main__':
     # run the Flask RESTful API, make the server publicly available (host='0.0.0.0') on port 8080
     app.run(host='0.0.0.0', port=8080, debug=True)
-
