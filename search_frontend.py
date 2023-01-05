@@ -1,53 +1,22 @@
 from flask import Flask, request, jsonify
-import re
 import nltk
 from nltk.stem.porter import *
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.util import ngrams
-from search_backend import *
-from collections import defaultdict
-import numpy as np
-from search_backend import *
+nltk.download('stopwords')
+from nitzan import *
+# from backend import Backendd
+from backendd import Backend
 
-
-# pkl_file = "part15_preprocessed.pkl"
-
-# with open(pkl_file, 'rb') as f:
-#     pages = pickle.load(f)
-
-# with open("posting_lists.pkl", 'rb') as f:
-#     posting_lists = pickle.load(f)
-
-# with open("posting_body_lists.pkl", 'rb') as f:
-#     posting_body_lists = pickle.load(f)
-
-# with open("posting_title_lists.pkl", 'rb') as f:
-#     posting_title_lists = pickle.load(f)
-
-# with open("dl/dl_title.pkl", 'rb') as f:
-#     DL_title = pickle.load(f)
-#     AVGDL_title = sum(DL_title.values()) / len(DL_title)
-
-# with open("dl/dl_body.pkl", 'rb') as f:
-#     DL_body = pickle.load(f)
-#     AVGDL_body = sum(DL_body.values()) / len(DL_body)
-
-# with open("dl/df_title.pkl", 'rb') as f:
-#     DF_title = pickle.load(f)
-
-# with open("dl/df_body.pkl", 'rb') as f:
-#     DF_body = pickle.load(f)
-
+from inverted_index import *
 
 class MyFlaskApp(Flask):
     def run(self, host=None, port=None, debug=None, **options):
-        super(MyFlaskApp, self).run(
-            host=host, port=port, debug=debug, **options)
-
+        super(MyFlaskApp, self).run(host=host, port=port, debug=debug, **options)
 
 app = MyFlaskApp(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+print("1")
 
 
 @app.route("/search")
@@ -71,13 +40,13 @@ def search():
     res = []
     query = request.args.get('query', '')
     if len(query) == 0:
-        return jsonify(res)
-
+      return jsonify(res)
+    # query_lst = backend.query_preprocess(query, backend.get_index_body())
+    # query_lst = backend.query_preprocess(query, backend.get_index_title())
     # BEGIN SOLUTION
-    query_list = Backend.query_preprocess(query, Backend.get_index())
 
+    # END SOLUTION
     return jsonify(res)
-
 
 @app.route("/search_body")
 def search_body():
@@ -98,21 +67,53 @@ def search_body():
     res = []
     query = request.args.get('query', '')
     if len(query) == 0:
-        return jsonify(res)
-    # BEGIN SOLUTION
-    query_list = Backend.query_preprocess(query, Backend.get_index())
+      return jsonify(res)
+    query_list = Backend.query_preprocess(query, Backend.get_index_body())
+    q_vec = Backend.generate_query_tfidf_vector(query_list, Backend.get_index_title())
+    tfidf = Backend.generate_document_tfidf_matrix(query_list, Backend.index_body())
+    cos_sim = Backend.cosine_similarity(tfidf, q_vec)
 
-    # END SOLUTION
+    # Sort Documents by Cos sim score and retrieve top 100 only
+    res_score = sorted([(doc_id, score) for doc_id, score in cos_sim.items()], key=lambda x: x[1], reverse=True)[:100]
+
+    for doc_id, score in res_score:
+        if doc_id not in Backend.get_title_dict().keys():
+            res.append((doc_id, 'None'))
+        else:
+            res.append((doc_id, Backend.get_title_dict()[doc_id]))
+
     return jsonify(res)
 
 
+    # BEGIN SOLUTION
+    # preprocess the query and get a list of "clean" terms
+    # dfidf_body = backend.tf_idf_scores(backend.get_index_body())
+    # query_lst = backend.preprocess_query(query, backend.get_index_body())
+    # dfidf_query = backend.tf_idf_scores(query_lst)
+    # cosin = backend.cosine_sim_using_sklearn(dfidf_query, dfidf_body)
+    # top_n_id, list_scores = backend.get_top_n_docs(cosin, 100)
+    # for doc_id in top_n_id:
+    #     res.append((doc_id, backend.get_title_dict()[doc_id]))
+
+    # END SOLUTION
+
+    return jsonify(res)
+
+    # END SOLUTION
+    # return jsonify(res)
+
 @app.route("/search_title")
 def search_title():
+    print("2")
     ''' Returns ALL (not just top 100) search results that contain A QUERY WORD 
         IN THE TITLE of articles, ordered in descending order of the NUMBER OF 
-        QUERY WORDS that appear in the title. For example, a document with a 
-        title that matches two of the query words will be ranked before a 
-        document with a title that matches only one query term. 
+        DISTINCT QUERY WORDS that appear in the title. DO NOT use stemming. DO 
+        USE the staff-provided tokenizer from Assignment 3 (GCP part) to do the 
+        tokenization and remove stopwords. For example, a document 
+        with a title that matches two distinct query words will be ranked before a 
+        document with a title that matches only one distinct query word, 
+        regardless of the number of times the term appeared in the title (or 
+        query). 
 
         Test this by navigating to the a URL like:
          http://YOUR_SERVER_DOMAIN/search_title?query=hello+world
@@ -123,28 +124,74 @@ def search_title():
         list of ALL (not just top 100) search results, ordered from best to 
         worst where each element is a tuple (wiki_id, title).
     '''
-    res = []
 
-    query = request.args.get('query', '')
+    # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    # with open("index.pkl", "rb") as f:
+    #     index_title = pickle.load(f)
+
+    res = []
+    # query = request.args.get('query', '')
+    query = "apple"
     if len(query) == 0:
         return jsonify(res)
     # BEGIN SOLUTION
-    query_list = Backend.query_preprocess(query, Backend.get_index())
-    index_title = Backend.get_index_title()
+    # query_list = Backend.query_preprocess(query, query)
+    index_title = get_index()
+    query_lst = Backend.preprocess_query( query, index_title)
+    # index_title = Backend.get_index_title()
+
     count_quary_word = {}
-    for term in np.unique(query_list):
+    for term in np.unique(query_lst):
         if term not in index_title.df.keys():
             continue
-        pls = Backend.read_posting_list(index_title, term, '_title')
-        for doc_id in pls:
+        pls = Backend.read_posting_list(index_title, term, term)
+        for doc_id, count in pls:
             if doc_id in count_quary_word.keys():
                 count_quary_word[doc_id] += 1
             else:
                 count_quary_word[doc_id] = 1
-    res = sorted(count_quary_word.items(), key=lambda x: x[1], reverse=True)
+    print("2")
+    result = sorted([(doc_id, score) for doc_id, score in count_quary_word.items()], key=lambda x: x[1], reverse=True)
+
+    # for doc_id, score in result:
+    #     res.append((doc_id, Backend.get_title_dict()[doc_id]))
+
+    #return jsonify(res)
+    print(result)
+    return result
+    return res
 
     # END SOLUTION
-    return jsonify(res)
+
+
+
+
+    #
+    #
+    # def search_titlee(query_lst, index):
+    #     counter_doc = {}
+    #
+    #     for term in np.unique(query_lst):
+    #         if term not in index.df.keys():
+    #             continue
+    #         list_of_doc = read_posting_list(index, term)
+    #
+    #         for dic_id, count in list_of_doc:
+    #             if dic_id in counter_doc:
+    #                 counter_doc[dic_id] += 1
+    #             else:
+    #                 counter_doc[dic_id] = 1
+    #     list_of_dict = sorted([(doc_id, score) for doc_id, score in counter_doc.items()], key=lambda x: x[1],
+    #                           reverse=True)
+    #     # result = []
+    #     # for doc_id, score in list_of_dict:
+    #     #     result.append((doc_id, self.get_title_dict()[doc_id]))
+    #     print("list_of_dict")
+    #     return list_of_dict
+    #
+
+search_title()
+
 
 
 @app.route("/search_anchor")
@@ -152,9 +199,12 @@ def search_anchor():
     ''' Returns ALL (not just top 100) search results that contain A QUERY WORD 
         IN THE ANCHOR TEXT of articles, ordered in descending order of the 
         NUMBER OF QUERY WORDS that appear in anchor text linking to the page. 
-        For example, a document with a anchor text that matches two of the 
-        query words will be ranked before a document with anchor text that 
-        matches only one query term. 
+        DO NOT use stemming. DO USE the staff-provided tokenizer from Assignment 
+        3 (GCP part) to do the tokenization and remove stopwords. For example, 
+        a document with a anchor text that matches two distinct query words will 
+        be ranked before a document with anchor text that matches only one 
+        distinct query word, regardless of the number of times the term appeared 
+        in the anchor text (or query). 
 
         Test this by navigating to the a URL like:
          http://YOUR_SERVER_DOMAIN/search_anchor?query=hello+world
@@ -168,11 +218,29 @@ def search_anchor():
     res = []
     query = request.args.get('query', '')
     if len(query) == 0:
-        return jsonify(res)
+      return jsonify(res)
     # BEGIN SOLUTION
-    query_list = Backend.query_preprocess(query, Backend.get_index())
+
+    query_list = Backend.query_preprocess(query)
+    index_title = Backend.get_index_anchor()
+    count_quary_word = {}
+    for term in np.unique(query_list):
+        if term not in index_title.df.keys():
+            continue
+        pls = Backend.read_posting_list(index_title, term)
+        for doc_id, count in pls:
+            if doc_id in count_quary_word.keys():
+                count_quary_word[doc_id] += 1
+            else:
+                count_quary_word[doc_id] = 1
+    result = sorted([(doc_id, score) for doc_id, score in count_quary_word.items()], key=lambda x: x[1], reverse=True)
+
+    for doc_id, score in result:
+        res.append((doc_id, Backend.get_title_dict()[doc_id]))
+
+    #return jsonify(res)
+    return res
     # END SOLUTION
-    return jsonify(res)
 
 
 @app.route("/get_pagerank", methods=['POST'])
@@ -194,11 +262,19 @@ def get_pagerank():
     res = []
     wiki_ids = request.get_json()
     if len(wiki_ids) == 0:
-        return jsonify(res)
+      return jsonify(res)
     # BEGIN SOLUTION
-    res = Backend.get_pagerank(wiki_ids)
+    for docID in wiki_ids:
+        try:
+            item = float(Backend.page_rank_dict[str(docID)])
+        except:
+            item = 0.005
+        res.append(item)
+    return res
+    #  return jsonify(res)
     # END SOLUTION
-    return jsonify(res)
+
+
 
 
 @app.route("/get_pageview", methods=['POST'])
@@ -222,11 +298,16 @@ def get_pageview():
     res = []
     wiki_ids = request.get_json()
     if len(wiki_ids) == 0:
-        return jsonify(res)
+      return jsonify(res)
     # BEGIN SOLUTION
-    res = Backend.get_pageview(wiki_ids)
+
+    for docID in wiki_ids:
+        item = Backend.page_view_dict[docID]
+        res.append(item)
+    return res
+    #     return jsonify(res)
     # END SOLUTION
-    return jsonify(res)
+
 
 
 if __name__ == '__main__':
