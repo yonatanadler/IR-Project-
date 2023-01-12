@@ -22,3 +22,18 @@ This repository presents a search engine project on the entire Wikipedia corpus 
   - Inverted Index:
 
     - inverted_index_gcp - builds the Inverted Index structure for our indexes.
+
+## Retrieval Methods
+
+In this project we support five different ranking methods called from search_frontend file:
+
+- Search -
+- Search_body - returns up to a 100 search results for the query using tf-idf and cosine aimilarity of the body of articles only.
+- Search_title - binary ranking, returns all search results that contain a query word in the title of articles.
+- search_anchor - binary ranking, returns all search results that contain a query word in the anchor text of articles.
+- get_pagerank - Returns PageRank values for a list of provided wiki article IDs.
+- get_pageview - Returns the number of page views that each of the provide wiki articles.
+
+## Evaluation
+
+We evaluated our engine using MAP@40. Our engine average score is ... and the average retrival time is ...
