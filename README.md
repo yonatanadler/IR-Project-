@@ -16,9 +16,9 @@ This repository presents a search engine project on the entire Wikipedia corpus 
 
   - Pre-made calculations:
 
-  * page_rank - makes dictionary of page rank for each document from the entire corpus.
-  * page_view - makes dictionary of page view for each document from the entire corpus.
+    - page_rank - makes dictionary of page rank for each document from the entire corpus.
+    - page_view - makes dictionary of page view for each document from the entire corpus.
 
   - Inverted Index:
 
-  * inverted_index_gcp - builds the Inverted Index structure for our indexes.
+    - inverted_index_gcp - builds the Inverted Index structure for our indexes.
