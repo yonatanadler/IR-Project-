@@ -1,22 +1,22 @@
+from inverted_index import *
+from backendd import Backend
+from nitzan import *
 from flask import Flask, request, jsonify
 import nltk
 from nltk.stem.porter import *
 from nltk.corpus import stopwords
 nltk.download('stopwords')
-from nitzan import *
 # from backend import Backendd
-from backendd import Backend
 
-from inverted_index import *
 
 class MyFlaskApp(Flask):
     def run(self, host=None, port=None, debug=None, **options):
-        super(MyFlaskApp, self).run(host=host, port=port, debug=debug, **options)
+        super(MyFlaskApp, self).run(
+            host=host, port=port, debug=debug, **options)
+
 
 app = MyFlaskApp(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
-
-print("1")
 
 
 @app.route("/search")
@@ -40,13 +40,14 @@ def search():
     res = []
     query = request.args.get('query', '')
     if len(query) == 0:
-      return jsonify(res)
+        return jsonify(res)
     # query_lst = backend.query_preprocess(query, backend.get_index_body())
     # query_lst = backend.query_preprocess(query, backend.get_index_title())
     # BEGIN SOLUTION
 
     # END SOLUTION
     return jsonify(res)
+
 
 @app.route("/search_body")
 def search_body():
@@ -67,14 +68,17 @@ def search_body():
     res = []
     query = request.args.get('query', '')
     if len(query) == 0:
-      return jsonify(res)
+        return jsonify(res)
     query_list = Backend.query_preprocess(query, Backend.get_index_body())
-    q_vec = Backend.generate_query_tfidf_vector(query_list, Backend.get_index_title())
-    tfidf = Backend.generate_document_tfidf_matrix(query_list, Backend.index_body())
+    q_vec = Backend.generate_query_tfidf_vector(
+        query_list, Backend.get_index_title())
+    tfidf = Backend.generate_document_tfidf_matrix(
+        query_list, Backend.index_body())
     cos_sim = Backend.cosine_similarity(tfidf, q_vec)
 
     # Sort Documents by Cos sim score and retrieve top 100 only
-    res_score = sorted([(doc_id, score) for doc_id, score in cos_sim.items()], key=lambda x: x[1], reverse=True)[:100]
+    res_score = sorted([(doc_id, score) for doc_id, score in cos_sim.items(
+    )], key=lambda x: x[1], reverse=True)[:100]
 
     for doc_id, score in res_score:
         if doc_id not in Backend.get_title_dict().keys():
@@ -83,7 +87,6 @@ def search_body():
             res.append((doc_id, Backend.get_title_dict()[doc_id]))
 
     return jsonify(res)
-
 
     # BEGIN SOLUTION
     # preprocess the query and get a list of "clean" terms
@@ -101,6 +104,7 @@ def search_body():
 
     # END SOLUTION
     # return jsonify(res)
+
 
 @app.route("/search_title")
 def search_title():
@@ -137,7 +141,7 @@ def search_title():
     # BEGIN SOLUTION
     # query_list = Backend.query_preprocess(query, query)
     index_title = get_index()
-    query_lst = Backend.preprocess_query( query, index_title)
+    query_lst = Backend.preprocess_query(query, index_title)
     # index_title = Backend.get_index_title()
 
     count_quary_word = {}
@@ -151,20 +155,18 @@ def search_title():
             else:
                 count_quary_word[doc_id] = 1
     print("2")
-    result = sorted([(doc_id, score) for doc_id, score in count_quary_word.items()], key=lambda x: x[1], reverse=True)
+    result = sorted([(doc_id, score) for doc_id, score in count_quary_word.items(
+    )], key=lambda x: x[1], reverse=True)
 
     # for doc_id, score in result:
     #     res.append((doc_id, Backend.get_title_dict()[doc_id]))
 
-    #return jsonify(res)
+    # return jsonify(res)
     print(result)
     return result
     return res
 
     # END SOLUTION
-
-
-
 
     #
     #
@@ -189,9 +191,7 @@ def search_title():
     #     print("list_of_dict")
     #     return list_of_dict
     #
-
 search_title()
-
 
 
 @app.route("/search_anchor")
@@ -218,7 +218,7 @@ def search_anchor():
     res = []
     query = request.args.get('query', '')
     if len(query) == 0:
-      return jsonify(res)
+        return jsonify(res)
     # BEGIN SOLUTION
 
     query_list = Backend.query_preprocess(query)
@@ -233,12 +233,13 @@ def search_anchor():
                 count_quary_word[doc_id] += 1
             else:
                 count_quary_word[doc_id] = 1
-    result = sorted([(doc_id, score) for doc_id, score in count_quary_word.items()], key=lambda x: x[1], reverse=True)
+    result = sorted([(doc_id, score) for doc_id, score in count_quary_word.items(
+    )], key=lambda x: x[1], reverse=True)
 
     for doc_id, score in result:
         res.append((doc_id, Backend.get_title_dict()[doc_id]))
 
-    #return jsonify(res)
+    # return jsonify(res)
     return res
     # END SOLUTION
 
@@ -262,7 +263,7 @@ def get_pagerank():
     res = []
     wiki_ids = request.get_json()
     if len(wiki_ids) == 0:
-      return jsonify(res)
+        return jsonify(res)
     # BEGIN SOLUTION
     for docID in wiki_ids:
         try:
@@ -273,8 +274,6 @@ def get_pagerank():
     return res
     #  return jsonify(res)
     # END SOLUTION
-
-
 
 
 @app.route("/get_pageview", methods=['POST'])
@@ -298,7 +297,7 @@ def get_pageview():
     res = []
     wiki_ids = request.get_json()
     if len(wiki_ids) == 0:
-      return jsonify(res)
+        return jsonify(res)
     # BEGIN SOLUTION
 
     for docID in wiki_ids:
@@ -307,7 +306,6 @@ def get_pageview():
     return res
     #     return jsonify(res)
     # END SOLUTION
-
 
 
 if __name__ == '__main__':
