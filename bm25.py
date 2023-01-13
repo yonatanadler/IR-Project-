@@ -1,47 +1,54 @@
 import math
+import builtins
+import numpy as np
+from collections import defaultdict
 
 
-class BM25:
-    def __init__(self, doc_len, df, tf=None, k1=1.5, b=0.75):
+class BM_25:
+
+    def __init__(self, index, k1=2.1, b=0.1):
         self.b = b
         self.k1 = k1
-        self.tf_ = tf
-        self.doc_len_ = doc_len
-        self.df_ = df
-        self.N_ = len(doc_len)
-        self.avgdl_ = sum(doc_len) / len(doc_len)
+        self.index = index
+        self.N = len(index.DL)
+        self.AVGDL = builtins.sum(index.DL.values()) / self.N
 
-    def calc_idf(self, query):
+    def calc_idf(self, list_of_tokens):
         idf = {}
-        for term in query:
-            if term not in self.df_:
-                idf[term] = 0
+        for term in list_of_tokens:
+            if term in self.index.df:
+                n_ti = self.index.df[term]
+                idf[term] = math.log(1 + (self.N - n_ti + 0.5) / (n_ti + 0.5))
             else:
-                idf[term] = math.log(
-                    1 + (self.N_ - self.df_[term] + 0.5) / (self.df_[term] + 0.5))
-
+                pass
         return idf
 
-    def search(self, queries):
-        scores = []
-        for query in queries:
-            scores.append([self._score(query, doc_id)
-                          for doc_id in range(self.N_)])
-        return scores
+    def search(self, query_to_search, N=1000):
+        res_score1 = defaultdict()
+        self.idf = self.calc_idf(query_to_search)
+        candidates = []
+        candidates_dict = {}
+        for term in np.unique(query_to_search):
+            if term in self.index.df:
+                all_res = self.index.read_posting_list(term, self.index.df[term])
+                candidates_dict.update({term: dict(all_res)})
+                candidates += [x[0] for x in all_res]
+        a = [(k, self._score(query_to_search, k, candidates_dict)) for k in np.unique(candidates)]
+        result = sorted([(doc_id, score) for doc_id, score in a], key=lambda x: x[1], reverse=True)[:N]
+        if len(result) != 0:
+            max_body = max(result, key=lambda x: x[1])[1]
+            res_score1 = {doc_id: bm25 / max_body for doc_id, bm25 in result}
+        return res_score1
 
-    def _score(self, query, doc_id):
-
-        idf = self.calc_idf(query)
-        score = 0
+    def _score(self, query, doc_id, candidate_dict):
+        score = 0.0
+        doc_len = self.index.DL[doc_id]
         for term in query:
-            if term in self.df_ and term in self.tf_[doc_id]:
-                score += idf[term] * self.tf_[doc_id][term] * (self.k1 + 1) / (
-                    self.tf_[doc_id][term] + self.k1 * (1 - self.b + self.b * self.doc_len_[doc_id] / self.avgdl_))
+            if term in self.index.df:
+                term_frequencies = candidate_dict[term]
+                if doc_id in term_frequencies:
+                    freq = term_frequencies[doc_id]
+                    numerator = self.idf[term] * freq * (self.k1 + 1)
+                    denominator = freq + self.k1 * (1 - self.b + self.b * doc_len / self.AVGDL)
+                    score += (numerator / denominator)
         return score
-
-    def top_N_documents(df, N):
-        top_N = {}
-        for query_id in df.index:
-            top_N[query_id] = sorted([(doc_id, df[doc_id][query_id])
-                                     for doc_id in df.columns], key=lambda x: x[1], reverse=True)[:N]
-        return top_N
