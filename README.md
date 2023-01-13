@@ -1,6 +1,6 @@
 # IR-Project
 
-This repository presents a search engine project on the entire Wikipedia corpus for information retrival course at BGU.
+This repo presents a search engine project on the entire Wikipedia corpus for information retrival course at BGU.
 
 ## Content
 
