@@ -108,6 +108,7 @@ def search_body():
 
 @app.route("/search_title")
 def search_title():
+    print("2")
     ''' Returns ALL (not just top 100) search results that contain A QUERY WORD 
         IN THE TITLE of articles, ordered in descending order of the NUMBER OF 
         DISTINCT QUERY WORDS that appear in the title. DO NOT use stemming. DO 
