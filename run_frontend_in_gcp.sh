@@ -47,7 +47,7 @@ python3 search_frontend.py
 
 ################################################################################
 # Clean up commands to undo the above set up and avoid unnecessary charges
-gcloud compute instances delete -q $INSTANCE_NAME
+gcloud compute instances delete -q $INSTANCE_NAME --zone $ZONE
 # make sure there are no lingering instances
 gcloud compute instances list
 # delete firewall rule
