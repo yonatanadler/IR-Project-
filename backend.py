@@ -11,7 +11,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from collections import Counter
-# from google.cloud import storage
+from google.cloud import storage
 from nltk.stem.porter import *
 from nltk.corpus import stopwords
 from collections import Counter, OrderedDict, defaultdict
@@ -75,9 +75,20 @@ def len_DL():
 
 
 def preprocess_query(query_as_string):
+    '''
+    Preprocess the query string and return a list of tokens.
+
+    Parameters
+    ----------
+    query_as_string : str
+        The query string.
+    ----------
+    Returns : list
+        A list of tokens.
+    '''
     english_stopwords = frozenset(stopwords.words('english'))
     corpus_stopwords = ['category', 'references',
-                        'also', 'links', 'extenal', 'see', 'thumb']
+                        'also', 'links', 'extenal', 'see', 'thumb', 'make']
     RE_WORD = re.compile(r"""[\#\@\w](['\-]?\w){2,24}""", re.UNICODE)
     all_stopwords = english_stopwords.union(corpus_stopwords)
     tokens = [token.group() for token in RE_WORD.finditer(
@@ -87,6 +98,19 @@ def preprocess_query(query_as_string):
 
 
 def tf_idf_and_cosine(query_tokens, index):
+    '''
+    Compute the tf-idf score and than cosine similarity between the quary and the docs for each document in the index and return a dictionary of the top 10 documents.
+
+    Parameters
+    ----------
+    query_tokens : list
+        A list of tokens.
+    index : Index
+        The inverted index object.
+    ----------
+    Returns : dict
+        A dictionary of the top 10 documents.
+        '''
     n = len(query_tokens)
     query_lst = np.ones(n)
     answer = {}
@@ -113,38 +137,76 @@ def tf_idf_and_cosine(query_tokens, index):
     return answer
 
 
-def title_score(query_to_search, index_title):
+def merge_results_pr(scores1, scores2, pr, w1=0.33, w2=0.33, w3=0.33, N=10):
+    '''
+    Merge the scores of two methods and the pr scores and return a list of the top 10 documents.
 
-    count_quary_word = {}
-    for term in np.unique(query_to_search):
-        if term not in index_title.df.keys():
-            continue
-        pls = index_title.read_posting_list(term, index_title.df[term])
-        for doc_id, count in pls:
-            if doc_id in count_quary_word.keys():
-                count_quary_word[doc_id] += 1
-            else:
-                count_quary_word[doc_id] = 1
-    return count_quary_word
-
-
-def merge_results_pr(scores1, scores2, pr, w1=0.33, w2=0.33, w3=0.33, N=40):
+    Parameters
+    ----------
+    scores1 : dict
+        A dictionary of the top 10 documents for the first query.
+    scores2 : dict
+        A dictionary of the top 10 documents for the second query.
+    pr : dict
+        A dictionary of the pr scores.
+    w1 : float
+        The weight of the first query.
+    w2 : float
+        The weight of the second query.
+    w3 : float
+        The weight of the pr scores.
+     N : int
+        The number of documents to return.
+    ----------
+    Returns : list
+        A list of the top 10 documents.''
+    '''
     # Union all docs and add weights, then sort
     pr_highest = max(pr.values())
     merged = [(k, (scores1.get(k, 0) * w1) + (scores2.get(k, 0) * w2) +
-               ((pr.get(k, 0)/pr_highest) * w3)) for k in set(scores1) | set(scores2)]
+               ((pr.get(int(k), 0)/pr_highest) * w3)) for k in set(scores1) | set(scores2)]
     return sorted(merged, key=lambda x: x[1], reverse=True)[:N]
 
 
-def merge_results_pr_withtitle(scores1, pr, w1=0.666, w3=0.33, N=40):
+def merge_results_pr_withtitle(scores1, pr, w1=0.666, w3=0.33, N=10):
+    '''
+    Merge the scores of one method and the pr scores and return a list of the top 10 documents.
+
+    Parameters
+    ----------
+    scores1 : dict
+        A dictionary of the top 10 documents for the first query.
+    pr : dict
+        A dictionary of the pr scores.
+    w1 : float
+        The weight of the first query.
+    w3 : float
+        The weight of the pr scores.
+    N : int
+        The number of documents to return.
+        ----------
+    Returns : list
+        A list of the top 10 documents.'
+    '''
     # Union all docs and add weights, then sort
     pr_highest = max(pr.values())
-    merged = [(k, (scores1.get(k, 0) * w1) + ((pr.get(k, 0)/pr_highest) * w3))
+    merged = [(int(k), (scores1.get(k, 0) * w1) + ((pr.get(k, 0)/pr_highest) * w3))
               for k in scores1]
     return sorted(merged, key=lambda x: x[1], reverse=True)[:N]
 
 
 def stemmer_query(query):
+    '''
+    Stem the query.
+
+    Parameters
+    ----------
+    query : str
+        The query.
+    ----------
+    Returns : list
+        A list of the stemmed query.
+    '''
     stemmer = PorterStemmer()
     query_lst = preprocess_query(query)
     query_stemmed = [stemmer.stem(token) for token in query_lst]
@@ -152,6 +214,19 @@ def stemmer_query(query):
 
 
 def merge(score_title_res, score_body):
+    '''
+    check if title has score and send to merge_results_pr or merge_results_pr_withtitle.
+
+    Parameters
+    ----------
+    score_title_res : dict
+        A dictionary of the top 10 documents for the title query.
+    score_body : dict
+        A dictionary of the top 10 documents for the body query.
+    ----------
+    Returns : list
+        A list of the top 10 documents.
+    '''
     if len(score_title_res) != 0:
         max_title = max(score_title_res.values())
         score_title = {doc_id: score / max_title for doc_id,
@@ -164,6 +239,17 @@ def merge(score_title_res, score_body):
 
 
 def id_title_dict(result):
+    '''
+    Get the title of the document.
+
+    Parameters
+    ----------
+    result : list
+        A list of the top 10 documents.
+    ----------
+    Returns : list
+        A list of the top 10 documents with their title.
+    '''
     res = []
     for doc_id, score in result:
         if doc_id not in id_title.keys():
@@ -174,12 +260,35 @@ def id_title_dict(result):
 
 
 def get_sorted_docs(dict):
+    '''
+    Sort the documents by their score.
+
+    Parameters
+    ----------
+    dict : dict
+        A dictionary of documents.
+    ----------
+    Returns : list
+        A list of docs sorted by their score.
+    '''
     result = sorted([(doc_id, score) for doc_id,
                     score in dict.items()], key=lambda x: x[1], reverse=True)
     return result
 
 
 def search__title(query_lst, index_title):
+    '''
+    binary scoring for the title index if the word is in the title or not.
+
+    Parameters
+    ----------
+    query_to_search : list
+        A list of tokens.
+    index_title : Index
+        The inverted index object.
+        ----------
+    Returns : dict
+        A dictionary of the top 10 documents.'''
     count_quary_word = {}
     for term in np.unique(query_lst):
         if term not in index_title.df.keys():
@@ -194,6 +303,19 @@ def search__title(query_lst, index_title):
 
 
 def search__anchor(query_lst, index_anchor):
+    '''
+    binary scoring for the anchor index if the word is in the anchor or not.
+
+    Parameters
+    ----------
+    query_lst : list
+        A list of the stemmed query.
+    index_anchor : Index
+        The anchor index.
+    ----------
+    Returns : dict
+        A dictionary of the top 10 documents.
+    '''
     dict_results = {}
     for token in np.unique(query_lst):
         if token not in index_anchor.df.keys():
@@ -208,6 +330,17 @@ def search__anchor(query_lst, index_anchor):
 
 
 def id_title_dict_anchor(result):
+    '''
+    Get the title of the document.
+
+    Parameters
+    ----------
+    result : list
+        A list of the top 10 documents.
+    ----------
+    Returns : list
+        A list of the top 10 documents with their title.
+    '''
     res = []
     for doc_id, score in result:
         if doc_id in id_title.keys():

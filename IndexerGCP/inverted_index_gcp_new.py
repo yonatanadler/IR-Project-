@@ -1,17 +1,17 @@
-import sys
-from collections import Counter, OrderedDict
-import itertools
-from itertools import islice, count, groupby
-import pandas as pd
-import os
-import re
-from operator import itemgetter
-from pathlib import Path
-import pickle
-from google.cloud import storage
-from collections import defaultdict
-from contextlib import closing
 import builtins
+from contextlib import closing
+from collections import defaultdict
+from google.cloud import storage
+import pickle
+from pathlib import Path
+from operator import itemgetter
+import re
+import os
+import pandas as pd
+from itertools import islice, count, groupby
+import itertools
+from collections import Counter, OrderedDict
+import sys
 import gcsfs
 
 client = storage.Client()

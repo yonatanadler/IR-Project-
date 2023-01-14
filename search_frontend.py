@@ -3,9 +3,11 @@ from flask import Flask, request, jsonify
 import backend
 from bm25 import BM_25
 
+
 class MyFlaskApp(Flask):
     def run(self, host=None, port=None, debug=None, **options):
-        super(MyFlaskApp, self).run(host=host, port=port, debug=debug, **options)
+        super(MyFlaskApp, self).run(
+            host=host, port=port, debug=debug, **options)
 
 
 app = MyFlaskApp(__name__)
@@ -39,13 +41,12 @@ def search():
     query_stemmer = backend.stemmer_query(query)
     body_bm25 = BM_25(backend.index_body_stem)
     score_body = body_bm25.search(query_stemmer)
-    score_title_res = backend.title_score(query_stemmer, backend.index_title_stem)
+    score_title_res = backend.title_score(
+        query_stemmer, backend.index_title_stem)
     result = backend.merge(score_title_res, score_body)
     res = backend.id_title_dict(result)
-
     return jsonify(res)
     # END SOLUTION
-
 
 
 @app.route("/search_body")
@@ -117,7 +118,6 @@ def search_title():
 
     # END SOLUTION
     return jsonify(res)
-
 
 
 @app.route("/search_anchor")
