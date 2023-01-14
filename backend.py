@@ -276,7 +276,7 @@ def get_sorted_docs(dict):
     return result
 
 
-def search__title(query_lst, index_title):
+def title_score(query_lst, index_title):
     '''
     binary scoring for the title index if the word is in the title or not.
 
