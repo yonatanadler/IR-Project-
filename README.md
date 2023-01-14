@@ -27,7 +27,7 @@ This repo presents a search engine project on the entire Wikipedia corpus for in
 
 In this project we support five different ranking methods called from search_frontend file:
 
-- Search -
+- Search - returns top 10 best result for query using BM-25, binary scoring for title and PageRank.
 - Search_body - returns up to a 100 search results for the query using tf-idf and cosine aimilarity of the body of articles only.
 - Search_title - binary ranking, returns all search results that contain a query word in the title of articles.
 - search_anchor - binary ranking, returns all search results that contain a query word in the anchor text of articles.
@@ -36,4 +36,4 @@ In this project we support five different ranking methods called from search_fro
 
 ## Evaluation
 
-We evaluated our engine using MAP@40. Our engine average score is ... and the average retrival time is ...
+We evaluated our engine using MAP@40. Our engine average score is 0.72 and the average retrival time is 3.4.
