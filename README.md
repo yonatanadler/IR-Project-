@@ -36,4 +36,4 @@ In this project we support five different ranking methods called from search_fro
 
 ## Evaluation
 
-We evaluated our engine using MAP@40. Our engine average score is 0.72 and the average retrival time is 3.4.
+We evaluated our engine using MAP@40. Our engine average score is 0.747 and the average retrival time is 3.43 sec.
