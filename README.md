@@ -21,7 +21,7 @@ This repo presents a search engine project on the entire Wikipedia corpus for in
 
   - Inverted Index:
 
-    - inverted_index_gcp - builds the Inverted Index structure for our indexes.
+    - inverted_index_gcp_new - builds the Inverted Index structure for our indexes.
 
 ## Retrieval Methods
 
