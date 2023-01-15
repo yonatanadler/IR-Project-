@@ -44,7 +44,7 @@ def search():
     score_title_res = backend.title_score(
         query_stemmer, backend.index_title_stem)
     result = backend.merge(score_title_res, score_body)
-    res = backend.id_title_dict(result)
+    res = backend.id_title_search(result)
     return jsonify(res)
     # END SOLUTION
 
@@ -112,7 +112,7 @@ def search_title():
     # BEGIN SOLUTION
 
     query_lst = backend.preprocess_query(query)
-    count_quary_word = backend.search__title(query_lst, backend.index_title)
+    count_quary_word = backend.title_score(query_lst, backend.index_title)
     result = backend.get_sorted_docs(count_quary_word)
     res = backend.id_title_dict(result)
 

@@ -238,9 +238,9 @@ def merge(score_title_res, score_body):
     return result
 
 
-def id_title_dict(result):
+def id_title_search(result):
     '''
-    Get the title of the document.
+    Get the title of the document for search function.
 
     Parameters
     ----------
@@ -249,6 +249,27 @@ def id_title_dict(result):
     ----------
     Returns : list
         A list of the top 10 documents with their title.
+    '''
+    res = []
+    for doc_id, score in result:
+        if doc_id not in id_title.keys():
+            res.append((str(doc_id), 'None'))
+        else:
+            res.append((str(doc_id), id_title[doc_id]))
+    return res
+
+
+def id_title_dict(result):
+    '''
+    Get the title of the document.
+
+    Parameters
+    ----------
+    result : list
+        A list of the top N documents.
+    ----------
+    Returns : list
+        A list of the top N documents with their title.
     '''
     res = []
     for doc_id, score in result:
