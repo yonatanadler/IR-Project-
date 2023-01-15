@@ -110,10 +110,9 @@ def tf_idf_and_cosine(query_tokens, index):
     ----------
     Returns : dict
         A dictionary of the top 10 documents.
-        '''
-    n = len(query_tokens)
-    query_lst = np.ones(n)
-    answer = {}
+        '''  
+    query_lst = np.ones(len(query_tokens))
+    result = {}
     # read all the posting lists at once and store them in memory
     posting_lists = {term: index.read_posting_list(
         term, index.df[term]) for term in np.unique(query_tokens) if term in index.df}
@@ -124,17 +123,19 @@ def tf_idf_and_cosine(query_tokens, index):
     candi = {doc_id for term_freq in candidates_dict.values()
              for doc_id in term_freq}
     for doc in candi:
-        tf_ids_score = np.zeros(n)
-        for i, w in enumerate(query_tokens):
-            if (w in index.df) and (doc in candidates_dict[w]):
-                tf_ids_score[i] = (candidates_dict[w][doc] /
-                                   index.DL[doc])*np.log2(6348911 / index.df[w])
+        tf_score = np.zeros(len(query_tokens))
+        i = 0
+        for w in query_tokens:
+            if w in index.df:
+                if doc in candidates_dict[w]:
+                    tf_score[i] = (candidates_dict[w][doc] /
+                                       index.DL[doc])*np.log2(len_DL() / index.df[w])
             else:
-                tf_ids_score[i] = 0
-        # use numpy dot product
-        answer[doc] = np.dot(tf_ids_score, query_lst) / \
+                tf_score[i] = 0
+            i+= 1    
+        result[doc] = np.dot(tf_score, query_lst) / \
             (np.linalg.norm(query_lst) * id2tf[doc])
-    return answer
+    return result
 
 
 def merge_results_pr(scores1, scores2, pr, w1=0.33, w2=0.33, w3=0.33, N=10):
