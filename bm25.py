@@ -39,23 +39,27 @@ class BM_25:
         res_score1 = defaultdict()
         self.idf = self.calc_idf(query_to_search)
         candidates = []
-        candidates_dict = {}
+        dict_candidates = {}
         for term in np.unique(query_to_search):
             if term in self.index.df:
-                all_res = self.index.read_posting_list(
+                pls = self.index.read_posting_list(
                     term, self.index.df[term])
-                candidates_dict.update({term: dict(all_res)})
-                candidates += [x[0] for x in all_res]
-        a = [(k, self._score(query_to_search, k, candidates_dict))
+                dict_candidates.update({term: dict(pls)})
+                candidates += [x[0] for x in pls]
+        sort_score = [(k, self._score(query_to_search, k, dict_candidates))
              for k in np.unique(candidates)]
-        result = sorted([(doc_id, score) for doc_id, score in a],
-                        key=lambda x: x[1], reverse=True)[:N]
+        if len(sort_score)< N:
+            result = sorted([(doc_id, score) for doc_id, score in sort_score],
+                            key=lambda x: x[1], reverse=True)
+        else:    
+            result = sorted([(doc_id, score) for doc_id, score in sort_score],
+                            key=lambda x: x[1], reverse=True)[:N]
         if len(result) != 0:
             max_body = max(result, key=lambda x: x[1])[1]
             res_score1 = {doc_id: bm25 / max_body for doc_id, bm25 in result}
         return res_score1
 
-    def _score(self, query, doc_id, candidate_dict):
+    def _score(self, query, doc_id, dict_candidates):
         '''
         compute the BM25 score of a query against a single document
         parameters:
