@@ -99,7 +99,7 @@ def preprocess_query(query_as_string):
 
 def tf_idf_and_cosine(query_tokens, index):
     '''
-    Compute the tf-idf score and than cosine similarity between the quary and the docs for each document in the index and return a dictionary of the top 10 documents.
+    Compute the tf-idf score and than cosine similarity between the quary and the docs for each document in the index and return a dictionary with there score.
 
     Parameters
     ----------
@@ -109,7 +109,7 @@ def tf_idf_and_cosine(query_tokens, index):
         The inverted index object.
     ----------
     Returns : dict
-        A dictionary of the top 10 documents.
+        A dictionary key:doc_id, value:score.
         '''  
     query_lst = np.ones(len(query_tokens))
     result = {}
@@ -145,15 +145,15 @@ def merge_results_pr(scores1, scores2, pr, w1=0.33, w2=0.33, w3=0.33, N=10):
     Parameters
     ----------
     scores1 : dict
-        A dictionary of the top 10 documents for the first query.
+        A dictionary of scores with BM25.
     scores2 : dict
-        A dictionary of the top 10 documents for the second query.
+         A dictionary of scores with binary(using search title).
     pr : dict
         A dictionary of the pr scores.
     w1 : float
-        The weight of the first query.
+        The weight of the first methods.
     w2 : float
-        The weight of the second query.
+        The weight of the second methods.
     w3 : float
         The weight of the pr scores.
      N : int
@@ -171,7 +171,7 @@ def merge_results_pr(scores1, scores2, pr, w1=0.33, w2=0.33, w3=0.33, N=10):
 
 def merge_results_pr_withtitle(scores1, pr, w1=0.666, w3=0.33, N=10):
     '''
-    Merge the scores of one method and the pr scores and return a list of the top 10 documents.
+    Merge the scores of bm25 and the pr scores and return a list of the top 10 documents.
 
     Parameters
     ----------
@@ -180,7 +180,7 @@ def merge_results_pr_withtitle(scores1, pr, w1=0.666, w3=0.33, N=10):
     pr : dict
         A dictionary of the pr scores.
     w1 : float
-        The weight of the first query.
+        The weight of the first methods.
     w3 : float
         The weight of the pr scores.
     N : int
@@ -221,9 +221,9 @@ def merge(score_title_res, score_body):
     Parameters
     ----------
     score_title_res : dict
-        A dictionary of the top 10 documents for the title query.
+        A dictionary with scores for title.
     score_body : dict
-        A dictionary of the top 10 documents for the body query.
+        A dictionary with scores for body.
     ----------
     Returns : list
         A list of the top 10 documents.
@@ -241,15 +241,15 @@ def merge(score_title_res, score_body):
 
 def id_title_search(result):
     '''
-    Get the title of the document for search function.
+    Get the title of the document.
 
     Parameters
     ----------
     result : list
-        A list of the top 10 documents.
+        A list of documents.
     ----------
     Returns : list
-        A list of the top 10 documents with their title.
+        A list of documents with their title.
     '''
     res = []
     for doc_id, score in result:
@@ -267,10 +267,10 @@ def id_title_dict(result):
     Parameters
     ----------
     result : list
-        A list of the top N documents.
+        A list of documents.
     ----------
     Returns : list
-        A list of the top N documents with their title.
+        A list of documents with their title.
     '''
     res = []
     for doc_id, score in result:
@@ -310,7 +310,7 @@ def title_score(query_lst, index_title):
         The inverted index object.
         ----------
     Returns : dict
-        A dictionary of the top 10 documents.'''
+        A dictionary key: doc_id, value: score title.'''
     count_quary_word = {}
     for term in np.unique(query_lst):
         if term not in index_title.df.keys():
@@ -331,12 +331,12 @@ def search__anchor(query_lst, index_anchor):
     Parameters
     ----------
     query_lst : list
-        A list of the stemmed query.
+         A list of tokens.
     index_anchor : Index
         The anchor index.
     ----------
     Returns : dict
-        A dictionary of the top 10 documents.
+         A dictionary key: doc_id, value: score title.
     '''
     count_quary_word = {}
     for term in np.unique(query_lst):
