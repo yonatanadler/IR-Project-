@@ -74,7 +74,7 @@ class BM_25:
         doc_len = self.index.DL[doc_id]
         for term in query:
             if term in self.index.df:
-                term_frequencies = candidate_dict[term]
+                term_frequencies = dict_candidates[term]
                 if doc_id in term_frequencies:
                     freq = term_frequencies[doc_id]
                     numerator = self.idf[term] * freq * (self.k1 + 1)
