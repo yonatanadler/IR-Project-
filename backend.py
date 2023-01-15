@@ -338,17 +338,17 @@ def search__anchor(query_lst, index_anchor):
     Returns : dict
         A dictionary of the top 10 documents.
     '''
-    dict_results = {}
-    for token in np.unique(query_lst):
-        if token not in index_anchor.df.keys():
+    count_quary_word = {}
+    for term in np.unique(query_lst):
+        if term not in index_anchor.df.keys():
             continue
-        posting = index_anchor.read_posting_list(token, index_anchor.df[token])
-        for doc_id, link_doc_id in posting:
-            if link_doc_id in dict_results:
-                dict_results[link_doc_id] += 1
+        plss = index_anchor.read_posting_list(term, index_anchor.df[term])
+        for doc_id, count in plss:
+            if doc_id in count_quary_word.keys():
+                count_quary_word[doc_id] += 1
             else:
-                dict_results[link_doc_id] = 1
-    return dict_results
+                count_quary_word[doc_id] = 1
+    return count_quary_word
 
 
 def id_title_dict_anchor(result):
