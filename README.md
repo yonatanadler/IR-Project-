@@ -27,9 +27,7 @@ This repo presents a search engine project on the entire Wikipedia corpus for in
 
 - Evaluation - Folder contains file to evaluate our engine by few different evaluation methods and json file for training our engine. this file helped us find the right parameters and weights for the retrival methods we used.
 
-- backend - python file contains all the back function we use for our engine.
-
-- bm25 - python file contains implementation of BM-25 method.
+- Backend - Folder contains two python files contain all the back functions we use for our engine.
 
 - search_frontend - python file contains the front part of our engine, uses the calculations from backend file and.
 
