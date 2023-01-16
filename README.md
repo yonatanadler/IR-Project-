@@ -23,6 +23,16 @@ This repo presents a search engine project on the entire Wikipedia corpus for in
 
     - inverted_index_gcp_new - builds the Inverted Index structure for our indexes.
 
+- RunApps - Folder contains all the relevent files we got to run the project in GCP
+
+- Evaluation - Folder contains file to evaluate our engine by few different evaluation methods and json file for training our engine. this file helped us find the right parameters and weights for the retrival methods we used.
+
+- backend - python file contains all the back function we use for our engine.
+
+- bm25 - python file contains implementation of BM-25 method.
+
+- search_frontend - python file contains the front part of our engine, uses the calculations from backend file and.
+
 ## Retrieval Methods
 
 In this project we support five different ranking methods called from search_frontend file:
