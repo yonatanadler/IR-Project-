@@ -110,7 +110,7 @@ def tf_idf_and_cosine(query_tokens, index):
     ----------
     Returns : dict
         A dictionary key:doc_id, value:score.
-        '''  
+        '''
     query_lst = np.ones(len(query_tokens))
     result = {}
     # read all the posting lists at once and store them in memory
@@ -129,10 +129,10 @@ def tf_idf_and_cosine(query_tokens, index):
             if w in index.df:
                 if doc in candidates_dict[w]:
                     tf_score[i] = (candidates_dict[w][doc] /
-                                       index.DL[doc])*np.log2(len_DL() / index.df[w])
+                                   index.DL[doc])*np.log2(len_DL() / index.df[w])
             else:
                 tf_score[i] = 0
-            i+= 1    
+            i += 1
         result[doc] = np.dot(tf_score, query_lst) / \
             (np.linalg.norm(query_lst) * id2tf[doc])
     return result
@@ -254,9 +254,9 @@ def id_title_search(result):
     res = []
     for doc_id, score in result:
         if doc_id not in id_title.keys():
-            res.append((str(doc_id), 'None'))
+            res.append((int(doc_id), 'None'))
         else:
-            res.append((str(doc_id), id_title[doc_id]))
+            res.append((int(doc_id), id_title[doc_id]))
     return res
 
 
